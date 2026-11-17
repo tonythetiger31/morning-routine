@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Morning">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f1115">
+<meta name="color-scheme" content="light dark">
+<title>Morning Routine</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#ffffff; --text:#14161a; --muted:#6b7280; --line:#e5e7eb;
+  --walk:#16a34a; --walk-d:#128a3f; --read:#2563eb; --read-d:#1d4fc4; --done:#16a34a; --empty:#e5e7eb;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0f1115; --card:#1a1d23; --text:#f3f4f6; --muted:#9ca3af; --line:#2a2e36; --empty:#2a2e36; }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+  -webkit-text-size-adjust:100%}
+body{padding:calc(env(safe-area-inset-top) + 16px) calc(env(safe-area-inset-right) + 16px) calc(env(safe-area-inset-bottom) + 32px) calc(env(safe-area-inset-left) + 16px)}
+main{max-width:520px;margin:0 auto}
+button{font:inherit;touch-action:manipulation;-webkit-appearance:none;appearance:none;cursor:pointer}
+header{margin:4px 2px 14px}
+header .date{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+header h1{margin:2px 0 0;font-size:30px;letter-spacing:-.02em}
+.banner{background:#fef3c7;color:#78350f;border-radius:12px;padding:10px 12px;font-size:14px;margin-bottom:12px}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;border:1px solid var(--line)}
+.status{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.status .big{font-size:20px;font-weight:700}
+.status .sub{font-size:14px;color:var(--muted);margin-top:2px}
+.ring{flex:none;width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:15px;
+  background:conic-gradient(var(--done) calc(var(--p)*1%), var(--empty) 0)}
+.ring span{width:50px;height:50px;border-radius:50%;background:var(--card);display:grid;place-items:center}
+.actions{display:grid;gap:12px;margin-bottom:10px}
+.act{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:92px;border:0;border-radius:20px;color:#fff;padding:16px 20px;text-align:left;
+  transition:transform .08s ease, filter .15s}
+.act:active{transform:scale(.97)}
+.act.walk{background:linear-gradient(135deg,var(--walk),var(--walk-d))}
+.act.read{background:linear-gradient(135deg,var(--read),var(--read-d))}
+.act .t{font-size:21px;font-weight:700;line-height:1.15}
+.act .s{font-size:14px;opacity:.9;margin-top:4px}
+.act .e{font-size:34px;line-height:1}
+.act .badge{font-size:13px;font-weight:700;background:rgba(255,255,255,.22);border-radius:999px;padding:4px 10px;margin-top:8px;display:inline-block}
+.act.done{filter:saturate(.9)}
+.undo{display:flex;gap:8px;align-items:center;justify-content:space-between;font-size:14px;color:var(--muted);margin:2px 2px 14px}
+.link{background:none;border:0;color:var(--read);font-weight:600;padding:8px 4px;font-size:15px}
+.link:disabled{color:var(--muted);opacity:.5}
+.link.danger{color:#dc2626}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--bg);border-radius:14px;padding:12px}
+.stat .n{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+h2{font-size:13px;margin:0 0 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end}
+.wd{text-align:center;font-size:12px;color:var(--muted)}
+.wd.today{color:var(--text);font-weight:700}
+.bar{height:64px;border-radius:8px;background:var(--empty);position:relative;overflow:hidden;margin-bottom:5px}
+.bar i{position:absolute;left:0;right:0;bottom:0;display:block}
+.bar i.w{background:var(--walk);height:0}
+.bar i.r{background:var(--read);height:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal .h{font-size:11px;color:var(--muted);text-align:center;padding-bottom:2px}
+.cell{aspect-ratio:1;border-radius:8px;background:var(--empty);position:relative;overflow:hidden;font-size:11px;display:grid;place-items:center;color:var(--muted)}
+.cell.future{background:transparent;border:1px dashed var(--line)}
+.cell.w{background:linear-gradient(90deg,var(--walk) 50%,var(--empty) 50%);color:var(--text);font-weight:700}
+.cell.r{background:linear-gradient(90deg,var(--empty) 50%,var(--read) 50%);color:var(--text);font-weight:700}
+.cell.both{background:var(--done);color:#fff;font-weight:700}
+.cell.today{outline:2px solid var(--text);outline-offset:1px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:10px}
+.legend b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+ul.log{list-style:none;margin:0;padding:0}
+ul.log li{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line);font-size:15px}
+ul.log li:first-child{border-top:0}
+ul.log .m{color:var(--muted)}
+.empty-note{color:var(--muted);font-size:14px}
+.foot{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:center}
+input[type=file]{display:none}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translate(-50%,20px);background:#111827;color:#fff;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="date" id="date"></div>
+    <h1 id="greet">Morning routine</h1>
+  </header>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <section class="card status">
+    <div>
+      <div class="big" id="statusBig"></div>
+      <div class="sub" id="statusSub"></div>
+    </div>
+    <div class="ring" id="ring" style="--p:0"><span id="ringTxt">0/2</span></div>
+  </section>
+
+  <section class="actions">
+    <button class="act walk" id="btnWalk" type="button">
+      <div><div class="t">Log 15 min walk</div><div class="s" id="walkSub"></div><span class="badge" id="walkBadge"></span></div>
+      <div class="e" aria-hidden="true">🚶</div>
+    </button>
+    <button class="act read" id="btnRead" type="button">
+      <div><div class="t">Log 10 min reading</div><div class="s" id="readSub"></div><span class="badge" id="readBadge"></span></div>
+      <div class="e" aria-hidden="true">📖</div>
+    </button>
+  </section>
+
+  <div class="undo">
+    <span id="undoLabel">Nothing logged yet today</span>
+    <button class="link" id="btnUndo" type="button" disabled>Undo last</button>
+  </div>
+
+  <section class="card">
+    <h2>Progress</h2>
+    <div class="stats">
+      <div class="stat"><div class="n" id="sStreak">0</div><div class="l">Current streak (days)</div></div>
+      <div class="stat"><div class="n" id="sBest">0</div><div class="l">Best streak (days)</div></div>
+      <div class="stat"><div class="n" id="sWalk">0</div><div class="l">Total walking (min)</div></div>
+      <div class="stat"><div class="n" id="sRead">0</div><div class="l">Total reading (min)</div></div>
+      <div class="stat"><div class="n" id="sDays">0</div><div class="l">Complete days</div></div>
+      <div class="stat"><div class="n" id="sWeek">0</div><div class="l">Complete days, last 7</div></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Last 7 days</h2>
+    <div class="week" id="week"></div>
+    <div class="legend"><span><b style="background:var(--walk)"></b>Walk</span><span><b style="background:var(--read)"></b>Reading</span></div>
+  </section>
+
+  <section class="card">
+    <h2>Last 5 weeks</h2>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span><b style="background:var(--done)"></b>Both done</span>
+      <span><b style="background:linear-gradient(90deg,var(--walk) 50%,var(--empty) 50%)"></b>Walk only</span>
+      <span><b style="background:linear-gradient(90deg,var(--empty) 50%,var(--read) 50%)"></b>Reading only</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Today's log</h2>
+    <ul class="log" id="log"></ul>
+  </section>
+
+  <div class="foot">
+    <button class="link" id="btnExport" type="button">Export backup</button>
+    <button class="link" id="btnImport" type="button">Import backup</button>
+    <button class="link danger" id="btnReset" type="button">Reset all</button>
+    <input type="file" id="file" accept="application/json,.json">
+  </div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+  var KEY = "morningRoutine.v1";
+  var MIN = { walk: 15, read: 10 };
+  var LABEL = { walk: "Walk", read: "Reading" };
+  var mem = null;          // fallback if localStorage is unavailable
+  var storageOK = true;
+  var data = { v: 1, entries: [] };
+  var lastTap = 0;
+
+  function $(id){ return document.getElementById(id); }
+
+  /* ---------- date helpers (all local time) ---------- */
+  function pad(n){ return n < 10 ? "0" + n : "" + n; }
+  function dayKey(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parseKey(k){ var p = k.split("-"); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function addDays(d, n){ var x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); return x; }
+  function todayKey(){ return dayKey(new Date()); }
+
+  /* ---------- storage ---------- */
+  function load(){
+    var raw = null;
+    try { raw = window.localStorage.getItem(KEY); } catch (e) { storageOK = false; }
+    if (!storageOK) { raw = mem; }
+    if (!raw) return;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.entries)) data = sanitize(parsed);
+    } catch (e) { /* corrupt data: keep empty, do not overwrite until next save */ }
+  }
+  function save(){
+    var s = JSON.stringify(data);
+    try {
+      window.localStorage.setItem(KEY, s);
+      storageOK = true;
+    } catch (e) { storageOK = false; mem = s; }
+    renderBanner();
+  }
+  function sanitize(p){
+    var out = [], seen = {};
+    p.entries.forEach(function(e){
+      if (!e || (e.type !== "walk" && e.type !== "read")) return;
+      var ts = Number(e.ts); if (!isFinite(ts)) return;
+      var day = (typeof e.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(e.day)) ? e.day : dayKey(new Date(ts));
+      var id = String(e.id || (ts + "-" + e.type));
+      if (seen[id]) id = id + "-" + Math.random().toString(36).slice(2, 6);
+      seen[id] = 1;
+      out.push({ id: id, type: e.type, ts: ts, day: day });
+    });
+    out.sort(function(a, b){ return a.ts - b.ts; });
+    return { v: 1, entries: out };
+  }
+
+  /* ---------- derived stats ---------- */
+  function byDay(){
+    var m = {};
+    data.entries.forEach(function(e){
+      var o = m[e.day] || (m[e.day] = { walk: 0, read: 0 });
+      o[e.type] += 1;
+    });
+    return m;
+  }
+  function isComplete(o){ return !!o && o.walk > 0 && o.read > 0; }
+
+  function streaks(m){
+    var keys = Object.keys(m).filter(function(k){ return isComplete(m[k]); }).sort();
+    // best streak
+    var best = 0, run = 0, prev = null;
+    keys.forEach(function(k){
+      if (prev && dayKey(addDays(parseKey(prev), 1)) === k) run += 1; else run = 1;
+      if (run > best) best = run;
+      prev = k;
+    });
+    // current streak: today counts if complete, otherwise start from yesterday
+    var d = new Date();
+    if (!isComplete(m[dayKey(d)])) d = addDays(d, -1);
+    var cur = 0;
+    while (isComplete(m[dayKey(d)])) { cur += 1; d = addDays(d, -1); }
+    return { cur: cur, best: best, completeDays: keys.length };
+  }
+
+  /* ---------- actions ---------- */
+  function log(type){
+    var now = Date.now();
+    if (now - lastTap < 600) return;   // guards against accidental double taps
+    lastTap = now;
+    var d = new Date(now);
+    data.entries.push({ id: now + "-" + Math.random().toString(36).slice(2, 7), type: type, ts: now, day: dayKey(d) });
+    save();
+    render();
+    var m = byDay()[dayKey(d)];
+    if (navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+    toast(isComplete(m) && ((type === "walk" ? m.walk : m.read) === 1)
+      ? "Both done for today. Nice work."
+      : LABEL[type] + " logged: " + MIN[type] + " min");
+  }
+  function undo(){
+    var t = todayKey();
+    for (var i = data.entries.length - 1; i >= 0; i--) {
+      if (data.entries[i].day === t) {
+        var e = data.entries.splice(i, 1)[0];
+        save(); render(); toast("Removed " + LABEL[e.type].toLowerCase());
+        return;
+      }
+    }
+  }
+  function removeById(id){
+    var i = data.entries.findIndex(function(e){ return e.id === id; });
+    if (i >= 0) { data.entries.splice(i, 1); save(); render(); }
+  }
+
+  /* ---------- rendering ---------- */
+  function fmtTime(ts){
+    return new Date(ts).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+  function el(tag, cls, txt){
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+  }
+  function renderBanner(){
+    var b = $("banner");
+    if (storageOK) { b.hidden = true; return; }
+    b.hidden = false;
+    b.textContent = "Your browser is blocking storage (private mode?). Progress will be lost when you close this page.";
+  }
+
+  function render(){
+    var now = new Date();
+    var tk = dayKey(now);
+    var m = byDay();
+    var td = m[tk] || { walk: 0, read: 0 };
+    var st = streaks(m);
+
+    $("date").textContent = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
+    var h = now.getHours();
+    $("greet").textContent = h < 5 ? "Up early" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+
+    // status
+    var n = (td.walk > 0 ? 1 : 0) + (td.read > 0 ? 1 : 0);
+    $("ring").style.setProperty("--p", n * 50);
+    $("ringTxt").textContent = n + "/2";
+    if (n === 2) { $("statusBig").textContent = "Routine complete"; $("statusSub").textContent = st.cur + "-day streak"; }
+    else if (n === 1) { $("statusBig").textContent = "One to go"; $("statusSub").textContent = (td.walk > 0 ? "Reading" : "Walk") + " still to log"; }
+    else { $("statusBig").textContent = "Let's start"; $("statusSub").textContent = st.cur > 0 ? "Keep your " + st.cur + "-day streak alive" : "Log a walk and some reading"; }
+
+    // buttons
+    ["walk", "read"].forEach(function(t){
+      var c = td[t], btn = $(t === "walk" ? "btnWalk" : "btnRead");
+      $(t + "Badge").textContent = c > 0 ? ("Done today" + (c > 1 ? " x" + c : "")) : "Not yet today";
+      $(t + "Sub").textContent = c > 0 ? (c * MIN[t]) + " min today" : "Tap when finished";
+      btn.classList.toggle("done", c > 0);
+    });
+
+    // undo
+    var todays = data.entries.filter(function(e){ return e.day === tk; });
+    $("btnUndo").disabled = todays.length === 0;
+    if (todays.length) {
+      var last = todays[todays.length - 1];
+      $("undoLabel").textContent = "Last: " + LABEL[last.type].toLowerCase() + " at " + fmtTime(last.ts);
+    } else $("undoLabel").textContent = "Nothing logged yet today";
+
+    // stats
+    var walkMin = 0, readMin = 0;
+    data.entries.forEach(function(e){ if (e.type === "walk") walkMin += MIN.walk; else readMin += MIN.read; });
+    var last7 = 0;
+    for (var i = 0; i < 7; i++) if (isComplete(m[dayKey(addDays(now, -i))])) last7++;
+    $("sStreak").textContent = st.cur;
+    $("sBest").textContent = st.best;
+    $("sWalk").textContent = walkMin;
+    $("sRead").textContent = readMin;
+    $("sDays").textContent = st.completeDays;
+    $("sWeek").textContent = last7;
+
+    // week bars
+    var week = $("week"); week.textContent = "";
+    var maxMin = MIN.walk + MIN.read;
+    for (var j = 6; j >= 0; j--) {
+      var d = addDays(now, -j), o = m[dayKey(d)] || { walk: 0, read: 0 };
+      var col = el("div");
+      var bar = el("div", "bar");
+      var wMin = Math.min(o.walk * MIN.walk, 60), rMin = Math.min(o.read * MIN.read, 60);
+      var total = Math.max(maxMin, wMin + rMin);
+      var iw = el("i", "w"), ir = el("i", "r");
+      iw.style.height = (wMin / total * 100) + "%";
+      ir.style.height = (rMin / total * 100) + "%";
+      ir.style.bottom = (wMin / total * 100) + "%";
+      bar.appendChild(iw); bar.appendChild(ir);
+      var lab = el("div", "wd" + (j === 0 ? " today" : ""), d.toLocaleDateString([], { weekday: "narrow" }));
+      col.appendChild(bar); col.appendChild(lab);
+      col.setAttribute("aria-label", d.toDateString() + ": " + (o.walk * MIN.walk) + " min walk, " + (o.read * MIN.read) + " min reading");
+      week.appendChild(col);
+    }
+
+    // calendar: 5 weeks, Sunday-first, ending with the current week
+    var cal = $("cal"); cal.textContent = "";
+    ["S","M","T","W","T","F","S"].forEach(function(x){ cal.appendChild(el("div", "h", x)); });
+    var start = addDays(now, -now.getDay() - 28);
+    for (var k = 0; k < 35; k++) {
+      var cd = addDays(start, k), key = dayKey(cd);
+      var oo = m[key], cls = "cell";
+      if (key > tk) cls += " future";
+      else if (isComplete(oo)) cls += " both";
+      else if (oo && oo.walk > 0) cls += " w";
+      else if (oo && oo.read > 0) cls += " r";
+      if (key === tk) cls += " today";
+      cal.appendChild(el("div", cls, key > tk ? "" : String(cd.getDate())));
+    }
+
+    // today's log
+    var ul = $("log"); ul.textContent = "";
+    if (!todays.length) {
+      var li0 = el("li"); li0.appendChild(el("span", "empty-note", "Nothing yet. Your first log shows up here."));
+      ul.appendChild(li0);
+    } else {
+      todays.slice().reverse().forEach(function(e){
+        var li = el("li");
+        li.appendChild(el("span", "", LABEL[e.type] + " · " + MIN[e.type] + " min"));
+        li.appendChild(el("span", "m", fmtTime(e.ts)));
+        ul.appendChild(li);
+      });
+    }
+  }
+
+  /* ---------- toast ---------- */
+  var tt = null;
+  function toast(msg){
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    clearTimeout(tt); tt = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+  }
+
+  /* ---------- backup ---------- */
+  function exportData(){
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "morning-routine-" + todayKey() + ".json";
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 1000);
+    toast("Backup exported");
+  }
+  function importData(file){
+    if (!file) return;
+    var r = new FileReader();
+    r.onload = function(){
+      try {
+        var p = JSON.parse(String(r.result));
+        if (!p || !Array.isArray(p.entries)) throw new Error("bad");
+        var incoming = sanitize(p);
+        var have = {}; data.entries.forEach(function(e){ have[e.id] = 1; });
+        var added = 0;
+        incoming.entries.forEach(function(e){ if (!have[e.id]) { data.entries.push(e); added++; } });
+        data.entries.sort(function(a, b){ return a.ts - b.ts; });
+        save(); render(); toast("Imported " + added + " entries");
+      } catch (e) { toast("That file is not a valid backup"); }
+    };
+    r.onerror = function(){ toast("Could not read the file"); };
+    r.readAsText(file);
+  }
+
+  /* ---------- wire up ---------- */
+  $("btnWalk").addEventListener("click", function(){ log("walk"); });
+  $("btnRead").addEventListener("click", function(){ log("read"); });
+  $("btnUndo").addEventListener("click", undo);
+  $("btnExport").addEventListener("click", exportData);
+  $("btnImport").addEventListener("click", function(){ $("file").click(); });
+  $("file").addEventListener("change", function(e){ importData(e.target.files[0]); e.target.value = ""; });
+  $("btnReset").addEventListener("click", function(){
+    if (window.confirm("Delete all logged walks and reading? This cannot be undone.")) {
+      data = { v: 1, entries: [] }; save(); render(); toast("All data cleared");
+    }
+  });
+
+  // keep in sync across tabs, midnight rollover, and returning to the app
+  window.addEventListener("storage", function(e){ if (e.key === KEY) { load(); render(); } });
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) { load(); render(); } });
+  window.addEventListener("pageshow", function(){ load(); render(); });
+  var shownDay = todayKey();
+  setInterval(function(){ var t = todayKey(); if (t !== shownDay) { shownDay = t; render(); } }, 30000);
+
+  load();
+  renderBanner();
+  render();
+
+  // expose for testing only
+  window.__mr = { streaks: streaks, byDay: byDay, getData: function(){ return data; } };
+})();
+</script>
+</body>
+</html>
